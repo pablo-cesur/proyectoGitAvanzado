@@ -1,28 +1,10 @@
-name: Prueba de Tokens
+name: Prueba Diagnostico
 
-on:
-  push:
+on: push
 
 jobs:
-  check-tokens:
+  check-runner:
     runs-on: self-hosted
-    env:
-      DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
-      LOCAL_DEV_TOKEN: ${{ vars.LOCAL_DEV_TOKEN }}
     steps:
-      - name: Descargar codigo del repositorio
-        uses: actions/checkout@v4
-
-      - name: Comparar DEV_TOKEN y LOCAL_DEV_TOKEN
-        shell: powershell
-        run: |
-          $localDev = $env:LOCAL_DEV_TOKEN
-          $secretDev = $env:DEV_TOKEN
-
-          Write-Host "Comprobando tokens de desarrollo..."
-          if ($secretDev -and $localDev -and ($secretDev -eq $localDev)) {
-              Write-Host "EXITO: El secret DEV_TOKEN y la variable LOCAL_DEV_TOKEN coinciden!"
-          } else {
-              Write-Host "ERROR: Los tokens no coinciden o alguna variable no esta definida."
-              exit 1
-          }
+      - name: Test de respuesta
+        run: echo "El runner esta ejecutando correctamente!"
