@@ -2,23 +2,23 @@ name: Prueba de Tokens
 
 on:
   push:
-   
 
 jobs:
   check-tokens:
     runs-on: self-hosted
+    env:
+      DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
+      LOCAL_DEV_TOKEN: ${{ vars.LOCAL_DEV_TOKEN }}
     steps:
       - name: Descargar codigo del repositorio
         uses: actions/checkout@v4
 
       - name: Comparar DEV_TOKEN y LOCAL_DEV_TOKEN
         shell: powershell
-        env:
-          SECRET_DEV: ${{ secrets.DEV_TOKEN }}
         run: |
           $localDev = $env:LOCAL_DEV_TOKEN
-          $secretDev = $env:SECRET_DEV
-          
+          $secretDev = $env:DEV_TOKEN
+
           Write-Host "Comprobando tokens de desarrollo..."
           if ($secretDev -and $localDev -and ($secretDev -eq $localDev)) {
               Write-Host "EXITO: El secret DEV_TOKEN y la variable LOCAL_DEV_TOKEN coinciden!"
