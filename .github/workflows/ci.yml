@@ -1,5 +1,5 @@
 name: CI
- 
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -7,22 +7,26 @@ on:
   push:
     branches: [develop]
   workflow_dispatch: {}
- 
+
 permissions:
   contents: write
- 
+
 jobs:
   update-readme:
+    # Solo se ejecuta al hacer merge/push en develop o lanzamiento manual
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
- 
+        with:
+          fetch-depth: 0 # Descarga todo el historial para inspeccionar commits de merge
+
       - name: Registrar la rama en el README
         run: |
           BRANCH=$(git log -1 --pretty=%B | grep 'Merge pull request' | sed -E 's#.*from [^/]+/##')
           BRANCH=${BRANCH:-${{ github.head_ref || github.ref_name }}}
           echo "- Añadida feature: $BRANCH" >> README.md
- 
+
       - name: Commit y push del README
         run: |
           git config user.name "github-actions[bot]"
@@ -30,15 +34,17 @@ jobs:
           git add README.md
           git commit -m "docs: registrar rama" || echo "Sin cambios que commitear"
           git push || echo "Nada que subir"
- 
+
   validate-dev:
     needs: update-readme
+    # Permite que se ejecute en PRs (donde update-readme se omite) y en pushes
+    if: always() && (needs.update-readme.result == 'success' || needs.update-readme.result == 'skipped')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
- 
+
       - name: Validar entorno de desarrollo
-        shell: pwsh
+        shell: pwsh # Usa 'powershell' si tu sistema utiliza la versión por defecto de Windows
         env:
           TOKEN: ${{ secrets.DEV_TOKEN }}
         run: |
