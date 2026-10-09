@@ -1,5 +1,5 @@
 name: CD
- 
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -7,23 +7,26 @@ on:
   push:
     branches: [main]
   workflow_dispatch: {}
- 
+
 permissions:
   contents: write
- 
+
 jobs:
   bump-version:
+    # Solo se ejecuta al hacer push directo/merge en main o por workflow_dispatch
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
- 
+
       - name: Incrementar versión en el README
         run: |
           LAST=$(grep -oP 'AppVersion-\K[0-9]+' README.md | tail -1)
+          LAST=${LAST:-0}
           NEXT=$((LAST + 1))
           FECHA=$(TZ=Europe/Madrid date '+%d/%m/%Y %H:%M')
           echo "- AppVersion-$NEXT - $FECHA" >> README.md
- 
+
       - name: Commit y push del README
         run: |
           git config user.name "github-actions[bot]"
@@ -31,12 +34,17 @@ jobs:
           git add README.md
           git commit -m "docs: bump de versión" || echo "Sin cambios que commitear"
           git push || echo "Nada que subir"
- 
+
   validate-prod:
     needs: bump-version
+    # Permite que el job se ejecute en PRs (donde bump-version se omite) o tras un push
+    if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
- 
+
       - name: Validar entorno de producción
-        shell: push
+        shell: powershell
+        run: |
+          Write-Host "Iniciando validación en el runner local..."
+          # Añade aquí tus comandos de validación o despliegue
